@@ -1,3 +1,6 @@
+import math
+import numpy as np
+from sage.all import var, solve, diff, integral
 
 def magnitude(vector): 
     return math.sqrt(sum(pow(element, 2) for element in vector))
@@ -188,4 +191,52 @@ def linear_approximation(f, point):
         raise ValueError("The function must have 1, 2, or 3 variables.")
     
     return linear_approx
+
+def arc_length(r, a=None, b=None, parameterize=False):
+    """
+    Calculate the arc length of a space curve or return its arc length parameterization.
+    
+    Parameters:
+        r : A vector function r(t) in SageMath vector form
+        a : Start parameter value (optional)
+        b : End parameter value (optional)
+        parameterize : If True, returns the arc length parameterization (default False)
+    
+    Returns:
+        If parameterize=False and a,b=None: Returns arc length function s(t)
+        If parameterize=False and a,b given: Returns definite arc length
+        If parameterize=True: Returns r(s), the arc length parameterization
+    """
+    # Get the parameter variable (usually 't')
+    t = r.variables()[0]
+    
+    # Calculate dr/dt
+    r_prime = r.derivative(t)
+    
+    # Calculate |dr/dt|
+    speed = r_prime.norm()
+    
+    if parameterize:
+        # For arc length parameterization, we need to:
+        # 1. Find s(t) = ∫|r'(t)|dt
+        s_of_t = integral(speed, t)
+        
+        # 2. Try to find t(s) by inverting s(t)
+        try:
+            # Attempt to solve s = s(t) for t
+            t_of_s = solve(var('s') == s_of_t, t)[0].rhs()
+            # Substitute t(s) back into r(t)
+            var('s')
+            return r.subs(t == t_of_s)
+        except:
+            print("Could not find explicit arc length parameterization")
+            return None
+    
+    elif a is not None and b is not None:
+        # Calculate definite arc length
+        return integral(speed, t, a, b)
+    
+    else:
+        # Return arc length function s(t)
+        return integral(speed, t)
 
